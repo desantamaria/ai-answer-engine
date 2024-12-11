@@ -4,11 +4,16 @@
 // Refer to the Cheerio docs here on how to parse HTML: https://cheerio.js.org/docs/basics/loading
 // Refer to Puppeteer docs here: https://pptr.dev/guides/what-is-puppeteer
 
+import Groq from "groq-sdk";
 import { NextResponse } from "next/server";
 
 // Regex pattern to match URLs
 const URL_REGEX =
   /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g;
+
+const client = new Groq({
+  apiKey: process.env["GROQ_API_KEY"],
+});
 
 export async function POST(req: Request) {
   try {
@@ -18,7 +23,19 @@ export async function POST(req: Request) {
     if (extractedUrls.length > 0) {
       console.log("Extracted URLs:", extractedUrls);
     }
-    return NextResponse.json({ role: "ai", content: "Response from chat" });
+
+    const chatCompletion = await client.chat.completions.create({
+      messages: [
+        { role: "system", content: "You are a helpful assistant." },
+        { role: "user", content: data },
+      ],
+      model: "llama3-8b-8192",
+    });
+
+    const response = chatCompletion.choices[0].message.content;
+    console.log(response);
+
+    return NextResponse.json({ role: "ai", content: response });
   } catch (error) {
     console.error("An error occurred:", error);
     return NextResponse.json({ error: "An error occurred" }, { status: 500 });
