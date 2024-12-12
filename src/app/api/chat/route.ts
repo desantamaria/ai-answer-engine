@@ -70,6 +70,12 @@ export async function POST(req: Request) {
           For each article separate the responses and provide the link and title before responding to any article.
 
           If no scraped article is provided, consider the previous messages in the conversation between the system and the user instead of relying on the scraped data. 
+
+          At the end your response please provide a list of urls referenced in your response in HTML format using the link tag. For example:
+          <EXAMPLE>
+          References:
+            <a href="https://www.thenewsapi.com/documentation">Source</a>
+          </EXAMPLE>
           `;
 
     // Limit amount of previous messages considered for prompt.

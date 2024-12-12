@@ -71,7 +71,7 @@ export default function Home() {
                     : "bg-cyan-600 text-white ml-auto"
                 }`}
               >
-                {msg.content}
+                <div dangerouslySetInnerHTML={{ __html: msg.content }}></div>
               </div>
             </div>
           ))}
