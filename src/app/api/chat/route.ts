@@ -7,7 +7,19 @@
 import Groq from "groq-sdk";
 import { NextResponse } from "next/server";
 import axios from "axios";
+import puppeteer from "puppeteer";
+import { Cheerio } from "cheerio";
+
 const cheerio = require("cheerio");
+
+interface ScrapedContent {
+  url: string;
+  title: string;
+  sections: {
+    type: "heading" | "paragraph" | "list";
+    content: string;
+  }[];
+}
 
 // Regex pattern to match URLs
 const URL_REGEX =
@@ -29,33 +41,11 @@ export async function POST(req: Request) {
       console.log("Extracted URLs:", extractedUrls);
     }
 
-    // Perform Web Scrape using Cheerio
-    const scrapedResults = await Promise.all(
-      extractedUrls.map(async url => {
-        try {
-          const response = await axios.get(url);
-          const html = response.data;
-          const $ = cheerio.load(html);
-
-          return {
-            url: url,
-            title: $("h1").text().trim(),
-            contents: $("p")
-              .map((_: any, el: any) => $(el).text().trim())
-              .get(),
-          };
-        } catch (error) {
-          console.error(`Error scraping ${url}:`, error);
-          return {
-            url: url,
-            title: "",
-            contents: [],
-          };
-        }
-      })
-    );
-
-    console.log(scrapedResults);
+    // Test SCRAPE
+    extractedUrls.forEach(async url => {
+      const scrapeResult = await performScrape(url);
+      console.log(scrapeResult);
+    });
 
     // Generate LLM Response
     const chatCompletion = await client.chat.completions.create({
@@ -63,10 +53,10 @@ export async function POST(req: Request) {
         {
           role: "system",
           content:
-            "You are a helpful assistant. Please respond to the prompt given a json representing articles that the user is asking about. The html part is in content",
+            "You are a helpful assistant. Please respond to the prompt given an data from articles that the user is asking about",
         },
         { role: "user", content: data },
-        { role: "user", content: scrapedResults.toString() },
+        // { role: "user", content: scrapedResults.toString() },
       ],
       model: "llama3-8b-8192",
     });
@@ -77,4 +67,67 @@ export async function POST(req: Request) {
     console.error("An error occurred:", error);
     return NextResponse.json({ error: "An error occurred" }, { status: 500 });
   }
+}
+
+async function performScrape(url: string): Promise<ScrapedContent> {
+  try {
+    const cheerioResult = await cheerioScrape(url);
+    if (cheerioResult.sections.length > 0) {
+      return cheerioResult;
+    }
+    return await puppeteerScrape(url);
+  } catch (error) {
+    console.error(`Error while scraping for: ${url}`, error);
+    return {
+      url,
+      title: "",
+      sections: [],
+    };
+  }
+}
+
+async function cheerioScrape(url: string): Promise<ScrapedContent> {
+  const response = await axios.get(url);
+  const html = response.data;
+  const $ = cheerio.load(html);
+
+  const sections: ScrapedContent["sections"] = [];
+
+  // Headings
+  $("h1, h2, h3").each((_: any, heading: any) => {
+    sections.push({
+      type: "heading",
+      content: $(heading).text().trim(),
+    });
+  });
+
+  // Paragraphs
+  $("p").each((_: any, paragraph: any) => {
+    sections.push({
+      type: "paragraph",
+      content: $(paragraph).text().trim(),
+    });
+  });
+
+  // Lists
+  $("ul, ol").each((_: any, list: any) => {
+    sections.push({
+      type: "list",
+      content: $(list).text().trim(),
+    });
+  });
+
+  return {
+    url,
+    title: $("h1").first().text().trim(),
+    sections: sections,
+  };
+}
+
+async function puppeteerScrape(url: string): Promise<ScrapedContent> {
+  return {
+    url,
+    title: "",
+    sections: [],
+  };
 }
