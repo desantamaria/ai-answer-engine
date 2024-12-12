@@ -32,10 +32,10 @@ const client = new Groq({
 // Extracts URLs from msg and scrapes website data then feeding the data to prompt
 export async function POST(req: Request) {
   try {
-    const data = await req.text();
+    const { message, context } = await req.json();
 
-    // Extract URLs
-    const extractedUrls = data.match(URL_REGEX) || [];
+    // Extract all URLs
+    const extractedUrls = message.match(URL_REGEX) || [];
     if (extractedUrls.length > 0) {
       console.log("Extracted URLs:", extractedUrls);
     }
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
       scrapedResults.push(scrapeResult);
     }
 
-    // Construct a comprehensive context from scraped content
+    // Construct context from scraped content
     const scrapedContext = scrapedResults
       .map(
         result =>
@@ -60,11 +60,20 @@ export async function POST(req: Request) {
 
     console.log(scrapedContext);
 
+    // TODO: Improve prompt
     const prompt = `You are a helpful assistant. 
           The user will provide a question and several URLs. 
           Use the scraped content from these URLs to provide a comprehensive, context-aware response.
           If the scraped content is relevant, incorporate it into your answer.
-          If the scraped content is not helpful, rely on your existing knowledge.`;
+          If the scraped content is not helpful, rely on your existing knowledge.
+          
+          For each article separate the responses and provide the link and title before responding to any article.
+
+          If no scraped article is provided, consider the previous messages in the conversation between the system and the user instead of relying on the scraped data. 
+          `;
+
+    // Limit amount of previous messages considered for prompt.
+    const limitedContext = context.slice(-5);
 
     // Generate LLM Response with both original prompt and scraped context
     const chatCompletion = await client.chat.completions.create({
@@ -73,9 +82,14 @@ export async function POST(req: Request) {
           role: "system",
           content: prompt,
         },
+        // Include previous messages for extra context
+        ...limitedContext.map((msg: any) => ({
+          role: msg.role,
+          content: msg.content,
+        })),
         {
           role: "user",
-          content: `Question: ${data}\n\nScraped Context:\n${scrapedContext}`,
+          content: `Question: ${message}\n\nScraped Context:\n${scrapedContext}`,
         },
       ],
       model: "llama3-8b-8192",
@@ -83,7 +97,7 @@ export async function POST(req: Request) {
 
     const response = chatCompletion.choices[0].message.content;
 
-    return NextResponse.json({ role: "ai", content: response });
+    return NextResponse.json({ role: "system", content: response });
   } catch (error) {
     console.error("An error occurred:", error);
     return NextResponse.json({ error: "An error occurred" }, { status: 500 });

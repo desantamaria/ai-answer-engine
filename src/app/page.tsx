@@ -3,14 +3,14 @@
 import { useState } from "react";
 
 type Message = {
-  role: "user" | "ai";
+  role: "user" | "system";
   content: string;
 };
 
 export default function Home() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([
-    { role: "ai", content: "Hello! How can I help you today?" },
+    { role: "system", content: "Hello! How can I help you today?" },
   ]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -19,7 +19,8 @@ export default function Home() {
 
     // Add user message to the conversation
     const userMessage = { role: "user" as const, content: message };
-    setMessages(prev => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setMessage("");
     setIsLoading(true);
 
@@ -29,7 +30,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message: message, context: updatedMessages }),
       });
       const responseJson = await response.json();
       setMessages(prev => [...prev, responseJson]);
@@ -58,14 +59,14 @@ export default function Home() {
             <div
               key={index}
               className={`flex gap-4 mb-4 ${
-                msg.role === "ai"
+                msg.role === "system"
                   ? "justify-start"
                   : "justify-end flex-row-reverse"
               }`}
             >
               <div
                 className={`px-4 py-2 rounded-2xl max-w-[80%] ${
-                  msg.role === "ai"
+                  msg.role === "system"
                     ? "bg-gray-800 border border-gray-700 text-gray-100"
                     : "bg-cyan-600 text-white ml-auto"
                 }`}
