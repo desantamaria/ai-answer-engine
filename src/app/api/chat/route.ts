@@ -8,7 +8,6 @@ import Groq from "groq-sdk";
 import { NextResponse } from "next/server";
 import axios from "axios";
 import puppeteer from "puppeteer";
-import { Cheerio } from "cheerio";
 
 const cheerio = require("cheerio");
 
@@ -71,7 +70,7 @@ export async function POST(req: Request) {
 
 async function performScrape(url: string): Promise<ScrapedContent> {
   try {
-    const cheerioResult = await cheerioScrape(url);
+    const cheerioResult = await axiosScrape(url);
     if (cheerioResult.sections.length > 0) {
       return cheerioResult;
     }
@@ -86,11 +85,26 @@ async function performScrape(url: string): Promise<ScrapedContent> {
   }
 }
 
-async function cheerioScrape(url: string): Promise<ScrapedContent> {
+async function axiosScrape(url: string): Promise<ScrapedContent> {
   const response = await axios.get(url);
   const html = response.data;
-  const $ = cheerio.load(html);
+  return cheerioParse(url, html);
+}
 
+async function puppeteerScrape(url: string): Promise<ScrapedContent> {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto(url);
+  const html = await page.content();
+
+  const result = await cheerioParse(url, html);
+  await browser.close();
+
+  return result;
+}
+
+async function cheerioParse(url: string, html: any): Promise<ScrapedContent> {
+  const $ = cheerio.load(html);
   const sections: ScrapedContent["sections"] = [];
 
   // Headings
@@ -121,13 +135,5 @@ async function cheerioScrape(url: string): Promise<ScrapedContent> {
     url,
     title: $("h1").first().text().trim(),
     sections: sections,
-  };
-}
-
-async function puppeteerScrape(url: string): Promise<ScrapedContent> {
-  return {
-    url,
-    title: "",
-    sections: [],
   };
 }
