@@ -40,25 +40,47 @@ export async function POST(req: Request) {
       console.log("Extracted URLs:", extractedUrls);
     }
 
-    // Test SCRAPE
-    extractedUrls.forEach(async url => {
+    // Collect scraped content from all URLs
+    const scrapedResults: ScrapedContent[] = [];
+    for (const url of extractedUrls) {
       const scrapeResult = await performScrape(url);
-      console.log(scrapeResult);
-    });
+      scrapedResults.push(scrapeResult);
+    }
 
-    // Generate LLM Response
+    // Construct a comprehensive context from scraped content
+    const scrapedContext = scrapedResults
+      .map(
+        result =>
+          `Content from ${result.url}:\nTitle: ${result.title}\n` +
+          result.sections
+            .map(section => `${section.type.toUpperCase()}: ${section.content}`)
+            .join("\n")
+      )
+      .join("\n\n");
+
+    console.log(scrapedContext);
+
+    const prompt = `You are a helpful assistant. 
+          The user will provide a question and several URLs. 
+          Use the scraped content from these URLs to provide a comprehensive, context-aware response.
+          If the scraped content is relevant, incorporate it into your answer.
+          If the scraped content is not helpful, rely on your existing knowledge.`;
+
+    // Generate LLM Response with both original prompt and scraped context
     const chatCompletion = await client.chat.completions.create({
       messages: [
         {
           role: "system",
-          content:
-            "You are a helpful assistant. Please respond to the prompt given an data from articles that the user is asking about",
+          content: prompt,
         },
-        { role: "user", content: data },
-        // { role: "user", content: scrapedResults.toString() },
+        {
+          role: "user",
+          content: `Question: ${data}\n\nScraped Context:\n${scrapedContext}`,
+        },
       ],
       model: "llama3-8b-8192",
     });
+
     const response = chatCompletion.choices[0].message.content;
 
     return NextResponse.json({ role: "ai", content: response });
@@ -70,10 +92,10 @@ export async function POST(req: Request) {
 
 async function performScrape(url: string): Promise<ScrapedContent> {
   try {
-    // const cheerioResult = await axiosScrape(url);
-    // if (cheerioResult.sections.length > 0) {
-    //   return cheerioResult;
-    // }
+    const cheerioResult = await axiosScrape(url);
+    if (cheerioResult.sections.length > 0) {
+      return cheerioResult;
+    }
     return await puppeteerScrape(url);
   } catch (error) {
     console.error(`Error while scraping for: ${url}`, error);
