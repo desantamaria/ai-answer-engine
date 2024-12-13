@@ -8,6 +8,9 @@ import Groq from "groq-sdk";
 import { NextResponse } from "next/server";
 import axios from "axios";
 import puppeteer from "puppeteer";
+import { Logger } from "@/app/utils/logger";
+
+const logger = new Logger("scrapper");
 
 const cheerio = require("cheerio");
 
