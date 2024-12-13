@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 import { Logger } from "@/app/utils/logger";
 import { performScrape, ScrapedContent } from "@/app/utils/scrape";
 import { LLM } from "@/app/utils/chat";
+import { prompt } from "@/app/utils/prompt";
 
 const logger = new Logger("scrapper");
 

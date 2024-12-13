@@ -1,4 +1,3 @@
-import { prompt } from "./prompt";
 import Groq from "groq-sdk";
 
 export type Message = {
