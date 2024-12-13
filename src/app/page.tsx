@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 import Markdown from "react-markdown";
-
-type Message = {
-  role: "user" | "system";
-  content: string;
-};
+import { Message } from "./utils/chat";
 
 export default function Home() {
   const [message, setMessage] = useState("");
