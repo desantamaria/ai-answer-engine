@@ -6,6 +6,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
+import { Logger } from "./app/utils/logger";
+
+const logger = new Logger("middleware");
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL,
@@ -20,6 +23,7 @@ const rateLimit = new Ratelimit({
 
 export async function middleware(request: NextRequest) {
   try {
+    logger.info("Middleware in process");
     const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
 
     const { success, limit, reset, remaining } = await rateLimit.limit(ip);
@@ -36,7 +40,7 @@ export async function middleware(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("Error in middleware");
+    logger.error("Error in middleware");
     return NextResponse.next();
   }
 }

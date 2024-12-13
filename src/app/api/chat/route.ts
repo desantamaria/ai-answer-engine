@@ -11,7 +11,7 @@ import { performScrape, ScrapedContent } from "@/app/utils/scrape";
 import { Message, PerformGroq } from "@/app/utils/chat";
 import { prompt } from "@/app/utils/prompt";
 
-const logger = new Logger("scrapper");
+const logger = new Logger("api route");
 
 // Regex pattern to match URLs
 const URL_REGEX =
@@ -23,17 +23,23 @@ export async function POST(req: Request) {
     const { message, context } = await req.json();
 
     // Extract all URLs
+    logger.info(`Extracting URLs from prompt`);
     const extractedUrls = message.match(URL_REGEX) || [];
     if (extractedUrls.length > 0) {
-      console.log("Extracted URLs:", extractedUrls);
+      //   logger.info("Extracted URLs:", extractedUrls);
+      logger.info(`Extracted ${extractedUrls.length} URLs from prompt`);
+    } else {
+      logger.warn(`No URLs were extracted`);
     }
 
     // Collect scraped content from all URLs
+    logger.info(`Processing all extracted URLs`);
     const scrapedResults: ScrapedContent[] = [];
     for (const url of extractedUrls) {
       const scrapeResult = await performScrape(url);
       scrapedResults.push(scrapeResult);
     }
+    logger.info(`All extracted URLs have been processed`);
 
     // Construct context from scraped content
     const scrapedContext = scrapedResults
@@ -67,7 +73,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ role: "system", content: response });
   } catch (error) {
-    console.error("An error occurred:", error);
+    logger.error("An error occurred:", error);
     return NextResponse.json({ error: "An error occurred" }, { status: 500 });
   }
 }

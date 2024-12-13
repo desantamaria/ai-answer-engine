@@ -70,9 +70,9 @@ export async function getCacheContent(
     // }
     return parsed;
 
-    logger.warn(`Invalid cached content format for URL: ${url}`);
-    await redis.del(cacheKey);
-    return null;
+    // logger.warn(`Invalid cached content format for URL: ${url}`);
+    // await redis.del(cacheKey);
+    // return null;
   } catch (error) {
     logger.error(`Cached retrieval error: ${error}`);
     return null;

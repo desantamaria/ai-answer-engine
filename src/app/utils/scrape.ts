@@ -34,7 +34,7 @@ export async function performScrape(url: string): Promise<ScrapedContent> {
     }
     return await puppeteerScrape(url);
   } catch (error) {
-    console.error(`Error while scraping for: ${url}`, error);
+    logger.error(`Error while scraping for: ${url}`, error);
     return {
       url,
       title: "",
@@ -57,7 +57,7 @@ async function axiosScrape(url: string): Promise<ScrapedContent> {
     });
     return cheerioParse(url, response.data);
   } catch (error) {
-    console.error(`Axios scrape failed for ${url}:`, error);
+    logger.error(`Axios scrape failed for ${url}:`, error);
     return {
       url,
       title: "",
@@ -93,7 +93,7 @@ async function puppeteerScrape(url: string): Promise<ScrapedContent> {
 
     return result;
   } catch (error) {
-    console.error(`Puppeteer scrape failed for ${url}:`, error);
+    logger.error(`Puppeteer scrape failed for ${url}:`, error);
     return {
       url,
       title: "",
