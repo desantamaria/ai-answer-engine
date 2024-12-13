@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Markdown from "react-markdown";
 
 type Message = {
   role: "user" | "system";
@@ -71,7 +72,18 @@ export default function Home() {
                     : "bg-cyan-600 text-white ml-auto"
                 }`}
               >
-                <div dangerouslySetInnerHTML={{ __html: msg.content }}></div>
+                <Markdown
+                  components={{
+                    a: ({ node, ...props }) => (
+                      <a
+                        {...props}
+                        className="text-cyan-400 hover:text-cyan-300 underline hover:no-underline transition-colors duration-200"
+                      />
+                    ),
+                  }}
+                >
+                  {msg.content}
+                </Markdown>
               </div>
             </div>
           ))}
