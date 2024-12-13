@@ -5,6 +5,7 @@ import Markdown from "react-markdown";
 import { Message } from "./utils/chat";
 
 import { v4 as uuidv4 } from "uuid";
+import { MsgScrollArea } from "@/components/msg-scroll-area";
 
 export default function Home() {
   const [message, setMessage] = useState("");
@@ -54,37 +55,39 @@ export default function Home() {
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto pb-32 pt-4">
         <div className="max-w-3xl mx-auto px-4">
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`flex gap-4 mb-4 ${
-                msg.role === "system"
-                  ? "justify-start"
-                  : "justify-end flex-row-reverse"
-              }`}
-            >
+          <MsgScrollArea scrollToBottom={messages && messages.length > 0}>
+            {messages.map((msg, index) => (
               <div
-                className={`px-4 py-2 rounded-2xl max-w-[80%] ${
+                key={index}
+                className={`flex gap-4 mb-4 ${
                   msg.role === "system"
-                    ? "border border-violet-700 text-gray-100"
-                    : "bg-violet-600 text-white ml-auto"
+                    ? "justify-start"
+                    : "justify-end flex-row-reverse"
                 }`}
               >
-                <Markdown
-                  components={{
-                    a: ({ node, ...props }) => (
-                      <a
-                        {...props}
-                        className="text-violet-400 hover:text-violet-300 underline hover:no-underline transition-colors duration-200"
-                      />
-                    ),
-                  }}
+                <div
+                  className={`px-4 py-2 rounded-2xl max-w-[80%] ${
+                    msg.role === "system"
+                      ? "border border-violet-700 text-gray-100"
+                      : "bg-violet-600 text-white ml-auto"
+                  }`}
                 >
-                  {msg.content}
-                </Markdown>
+                  <Markdown
+                    components={{
+                      a: ({ node, ...props }) => (
+                        <a
+                          {...props}
+                          className="text-violet-400 hover:text-violet-300 underline hover:no-underline transition-colors duration-200"
+                        />
+                      ),
+                    }}
+                  >
+                    {msg.content}
+                  </Markdown>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </MsgScrollArea>
           {isLoading && (
             <div className="flex gap-4 mb-4">
               <div className="w-8 h-8 rounded-full bg-violet-800 flex items-center justify-center">
