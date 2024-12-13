@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 
 import { Logger } from "@/app/utils/logger";
 import { performScrape, ScrapedContent } from "@/app/utils/scrape";
-import { LLM } from "@/app/utils/chat";
+import { Message, PerformGroq } from "@/app/utils/chat";
 import { prompt } from "@/app/utils/prompt";
 
 const logger = new Logger("scrapper");
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
         content: prompt,
       },
       // Include previous messages for extra context
-      ...context.map((msg: any) => ({
+      ...context.map((msg: Message) => ({
         role: msg.role,
         content: msg.content,
       })),
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
       },
     ];
 
-    const response = await LLM(messages);
+    const response = await PerformGroq(messages);
 
     return NextResponse.json({ role: "system", content: response });
   } catch (error) {

@@ -10,7 +10,7 @@ const client = new Groq({
   apiKey: process.env["GROQ_API_KEY"],
 });
 
-export async function LLM(messages: Message[]) {
+export async function PerformGroq(messages: Message[]) {
   // Generate LLM Response with both original prompt and scraped context
   const chatCompletion = await client.chat.completions.create({
     messages: messages,

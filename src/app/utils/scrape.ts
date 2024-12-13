@@ -1,7 +1,11 @@
 import axios from "axios";
 import puppeteer from "puppeteer";
+import { cacheContent, getCacheContent } from "./cache";
+import { Logger } from "./logger";
 
 const cheerio = require("cheerio");
+
+const logger = new Logger("scrapper");
 
 export interface ScrapedContent {
   url: string;
@@ -10,10 +14,20 @@ export interface ScrapedContent {
     type: "heading" | "paragraph" | "list";
     content: string;
   }[];
+  cachedAt?: number;
 }
 
 export async function performScrape(url: string): Promise<ScrapedContent> {
   try {
+    // Check cache first
+    logger.info(`Starting scrape for: ${url}`);
+    const cached = await getCacheContent(url);
+    if (cached) {
+      logger.info(`Using cached content for: ${url}`);
+      return cached;
+    }
+    logger.info(`Cached miss - proceeding with fresh scrape for: ${url}`);
+
     const cheerioResult = await axiosScrape(url);
     if (cheerioResult.sections.length > 0) {
       return cheerioResult;
@@ -118,9 +132,13 @@ async function cheerioParse(url: string, html: any): Promise<ScrapedContent> {
     });
   });
 
-  return {
+  const response = {
     url,
     title: $("h1").first().text().trim(),
     sections: sections,
   };
+
+  await cacheContent(url, response);
+
+  return response;
 }

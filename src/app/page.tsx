@@ -49,31 +49,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* <!-- Sidebar --> */}
-      <aside className="w-64 bg-gray-800 text-white flex-shrink-0 h-screen">
-        <div className="h-full flex flex-col">
-          {/* <!-- Sidebar Menu --> */}
-          <nav className="flex-1 px-2 py-4">
-            <a
-              href="#"
-              className="block py-2 px-4 rounded-lg hover:bg-gray-700"
-            >
-              Dashboard
-            </a>
-          </nav>
-
-          {/* <!-- Sidebar Footer --> */}
-          <div className="py-4 px-6 bg-gray-900">
-            <a
-              href="#"
-              className="block text-center py-2 px-4 rounded-lg bg-gray-700 hover:bg-gray-600"
-            >
-              Logout
-            </a>
-          </div>
-        </div>
-      </aside>
-
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto pb-32 pt-4">
         <div className="max-w-3xl mx-auto px-4">
@@ -135,13 +110,18 @@ export default function Home() {
       <div className="fixed bottom-0 w-full bg-gray-800 border-t border-gray-700 p-4">
         <div className="max-w-3xl mx-auto">
           <div className="flex gap-3 items-center">
-            <input
-              type="text"
+            <textarea
               value={message}
               onChange={e => setMessage(e.target.value)}
-              onKeyPress={e => e.key === "Enter" && handleSend()}
+              onKeyUp={e => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  handleSend();
+                } else if (e.key === "Enter" && e.shiftKey) {
+                  e.preventDefault();
+                }
+              }}
               placeholder="Type your message..."
-              className="flex-1 rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent placeholder-gray-400"
+              className="flex-1 rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent placeholder-gray-400 resize-none"
             />
             <button
               onClick={handleSend}
