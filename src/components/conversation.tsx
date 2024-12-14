@@ -6,6 +6,8 @@ import { Message } from "@/app/utils/chat";
 import { v4 as uuidv4 } from "uuid";
 import { MsgScrollArea } from "@/components/msg-scroll-area";
 import { Redis } from "@upstash/redis";
+import { Dialog, DialogTrigger } from "./ui/dialog";
+import { Button } from "./ui/button";
 
 export default function Conversation({ id }: { id?: string }) {
   const [conversationId, setConversationId] = useState("");
@@ -40,6 +42,8 @@ export default function Conversation({ id }: { id?: string }) {
     setIsLoading(true);
 
     try {
+      const newId = conversationId || uuidv4();
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -48,12 +52,13 @@ export default function Conversation({ id }: { id?: string }) {
         body: JSON.stringify({
           message: message,
           context: updatedMessages,
-          conversationId: conversationId || uuidv4(),
+          conversationId: newId,
         }),
       });
       const responseJson = await response.json();
-
       setMessages(prev => [...prev, responseJson]);
+      console.log(newId);
+      setConversationId(newId);
     } catch (error) {
       console.error("Error:", error);
       setMessages(prev => [
@@ -74,8 +79,15 @@ export default function Conversation({ id }: { id?: string }) {
     <div className="flex flex-col h-screen bg-[#0C041A]">
       {/* Header */}
       <div className="w-full bg-[#250D3A] border-b border-violet-700 p-4">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-2">
           <h1 className="text-xl font-semibold text-white">AI Chat Engine</h1>
+          {conversationId && (
+            <div className="bg-black">
+              <p className="border-violet-400 text-white">
+                Share Conversation: localhost:3000/{conversationId}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
