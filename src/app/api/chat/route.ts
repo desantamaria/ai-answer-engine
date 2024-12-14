@@ -10,8 +10,15 @@ import { Logger } from "@/app/utils/logger";
 import { performScrape, ScrapedContent } from "@/app/utils/scrape";
 import { Message, PerformGroq } from "@/app/utils/chat";
 import { prompt } from "@/app/utils/prompt";
+import { Redis } from "@upstash/redis";
+import { timeStamp } from "console";
 
 const logger = new Logger("api route");
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 
 // Regex pattern to match URLs
 const URL_REGEX =
@@ -20,7 +27,7 @@ const URL_REGEX =
 // Extracts URLs from msg and scrapes website data then feeding the data to prompt
 export async function POST(req: Request) {
   try {
-    const { message, context } = await req.json();
+    const { message, context, conversationId } = await req.json();
 
     // Extract all URLs
     logger.info(`Extracting URLs from prompt`);
@@ -71,7 +78,42 @@ export async function POST(req: Request) {
 
     const response = await PerformGroq(messages);
 
-    return NextResponse.json({ role: "system", content: response });
+    // Prepare for DB storage
+    const existingConversation = (await redis.get(
+      `conversation:${conversationId}`
+    )) || {
+      id: conversationId,
+      message: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Update conversation in Redis
+    const updatedConversation = {
+      ...existingConversation,
+      messages: [
+        ...context.map((msg: Message) => ({
+          role: msg.role,
+          content: msg.content,
+        })),
+        { role: "user", content: message, timestamp: new Date().toISOString() },
+        {
+          role: "assistant",
+          content: response,
+          timestamp: new Date().toISOString(),
+        },
+      ],
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Store updated conversation in Redis
+    await redis.set(`conversation:${conversationId}`, updatedConversation);
+
+    return NextResponse.json({
+      role: "system",
+      content: response,
+      conversationId,
+    });
   } catch (error) {
     logger.error("An error occurred:", error);
     return NextResponse.json({ error: "An error occurred" }, { status: 500 });

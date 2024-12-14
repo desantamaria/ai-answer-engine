@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
-import { Message } from "./utils/chat";
-
+import { Message } from "@/app/utils/chat";
 import { v4 as uuidv4 } from "uuid";
 import { MsgScrollArea } from "@/components/msg-scroll-area";
 import { useRouter } from "next/navigation";
 
-export default function Home() {
+export default function Conversation({ id }: { id?: string }) {
   const router = useRouter();
   const [conversationId, setConversationId] = useState("");
 
@@ -19,9 +18,8 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const pathMatch = window.location.pathname.match(/^\/chat\/(.+)$/);
-    if (pathMatch) {
-      setConversationId(pathMatch[1]);
+    if (id) {
+      setConversationId(id);
     }
   }, []);
 
@@ -48,12 +46,6 @@ export default function Home() {
         }),
       });
       const responseJson = await response.json();
-
-      // If new conversation redirect to new chat URL
-      if (!conversationId && responseJson.conversationId) {
-        router.push(`/chat/${responseJson.conversationId}`);
-        setConversationId(responseJson.conversationId);
-      }
 
       setMessages(prev => [...prev, responseJson]);
     } catch (error) {
