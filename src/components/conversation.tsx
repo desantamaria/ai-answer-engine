@@ -82,7 +82,7 @@ export default function Conversation({ id }: { id?: string }) {
         <div className="max-w-3xl mx-auto flex items-center justify-between gap-2">
           <h1 className="text-xl font-semibold text-white">AI Chat Engine</h1>
           {conversationId && (
-            <div className="bg-black">
+            <div className="bg-black p-1 rounded-lg">
               <p className="border-violet-400 text-white">
                 Share Conversation: localhost:3000/{conversationId}
               </p>
