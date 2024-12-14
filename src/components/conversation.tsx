@@ -182,11 +182,12 @@ export default function Conversation({ id }: { id?: string }) {
 }
 
 async function getConversation(conversationId: string) {
+  const redis = new Redis({
+    url: process.env.NEXT_PUBLIC_UPSTASH_REDIS_REST_URL,
+    token: process.env.NEXT_PUBLIC_UPSTASH_REDIS_REST_TOKEN,
+  });
+
   try {
-    const redis = new Redis({
-      url: "https://deep-rooster-49233.upstash.io",
-      token: "AcBRAAIjcDEwZjYyZTkyZmJlMzk0NTAxYjVmNDdmMGI2YjczZmJiZnAxMA",
-    });
     const conversation = await redis.get(`conversation:${conversationId}`);
 
     if (!conversation) {
