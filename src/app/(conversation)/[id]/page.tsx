@@ -1,7 +1,7 @@
 "use client";
 
 import Conversation from "@/components/conversation";
-import { use, useEffect } from "react";
+import { use } from "react";
 
 export default function ConversationPage({
   params,
@@ -10,14 +10,5 @@ export default function ConversationPage({
 }) {
   const { id } = use(params);
 
-  useEffect(() => {
-    console.log(id);
-  }, []);
-
-  //   const directMessage = useQuery(api.functions.dm.get, { id });
-  //   if (!directMessage) {
-  //     return null;
-  //   }
-
-  return <Conversation />;
+  return <Conversation id={id} />;
 }

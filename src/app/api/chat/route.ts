@@ -11,7 +11,6 @@ import { performScrape, ScrapedContent } from "@/app/utils/scrape";
 import { Message, PerformGroq } from "@/app/utils/chat";
 import { prompt } from "@/app/utils/prompt";
 import { Redis } from "@upstash/redis";
-import { timeStamp } from "console";
 
 const logger = new Logger("api route");
 
@@ -96,9 +95,8 @@ export async function POST(req: Request) {
           role: msg.role,
           content: msg.content,
         })),
-        { role: "user", content: message, timestamp: new Date().toISOString() },
         {
-          role: "assistant",
+          role: "system",
           content: response,
           timestamp: new Date().toISOString(),
         },

@@ -5,10 +5,9 @@ import Markdown from "react-markdown";
 import { Message } from "@/app/utils/chat";
 import { v4 as uuidv4 } from "uuid";
 import { MsgScrollArea } from "@/components/msg-scroll-area";
-import { useRouter } from "next/navigation";
+import { Redis } from "@upstash/redis";
 
 export default function Conversation({ id }: { id?: string }) {
-  const router = useRouter();
   const [conversationId, setConversationId] = useState("");
 
   const [message, setMessage] = useState("");
@@ -18,10 +17,17 @@ export default function Conversation({ id }: { id?: string }) {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      setConversationId(id);
-    }
-  }, []);
+    const fetchConversation = async () => {
+      if (id) {
+        setConversationId(id);
+        const redisMsgs = (await getConversation(id)) as {
+          messages: Message[];
+        };
+        setMessages(redisMsgs.messages);
+      }
+    };
+    fetchConversation();
+  }, [id]);
 
   const handleSend = async () => {
     if (!message.trim()) return;
@@ -161,4 +167,23 @@ export default function Conversation({ id }: { id?: string }) {
       </div>
     </div>
   );
+}
+
+async function getConversation(conversationId: string) {
+  try {
+    const redis = new Redis({
+      url: "https://deep-rooster-49233.upstash.io",
+      token: "AcBRAAIjcDEwZjYyZTkyZmJlMzk0NTAxYjVmNDdmMGI2YjczZmJiZnAxMA",
+    });
+    const conversation = await redis.get(`conversation:${conversationId}`);
+
+    if (!conversation) {
+      console.log(`Conversation does not exist for key: ${conversationId}`);
+      return null;
+    }
+    return conversation;
+  } catch (error) {
+    console.error(`Conversation retrieval error: ${error}`);
+    return null;
+  }
 }
